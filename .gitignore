@@ -1,0 +1,10 @@
+﻿__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+report.json
+sheet.png
+examples/report.json
+examples/sheet.png
+examples/diff.json
+examples/diff.png

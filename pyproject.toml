@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vision-eval"
+version = "0.1.0"
+description = "Numbers-first evaluation for computer vision: image diffs, masks, depth, contact sheets."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Mind Space Studio"}]
+dependencies = ["numpy>=1.24", "Pillow>=10"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Image Processing",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+vision-eval = "vision_eval.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+dev = []

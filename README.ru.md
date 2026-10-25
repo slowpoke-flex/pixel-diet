@@ -1,0 +1,104 @@
+# vision-eval
+
+**Сначала числа, потом пиксели.** Небольшой скилл и CLI для оценки компьютерного зрения: разница изображений,
+маски сегментации, карты глубины и контактные листы, которые показывают ошибку без мегабайтов картинок.
+
+Разрабатывает **Mind Space Studio**. Лицензия MIT.
+
+[English](README.md) · [简体中文](README.zh-CN.md) · [Русский](README.ru.md)
+
+## Зачем
+
+И человек, и агент легко обманываются одним красивым примером. Для честной оценки нужны метрика, размер
+выборки и команда, которая произвела число. Инструмент даёт первый проход за один вызов:
+
+- **разница изображений / рендера** — PSNR, SSIM, MAE, RMSE, процент изменений, связные области ошибки
+  (линия / пятно / точка);
+- **сегментация** — IoU, Dice, precision, recall по каждому классу;
+- **глубина** — AbsRel, RMSE, δ1/δ2/δ3;
+- **контактный лист** — A | B | усиленная разница, чтобы глаз проверил то, что нашли числа;
+- **коды выхода** — CI падает, если порог нарушен.
+
+Инструмент не обучает модели, не хранит датасеты и не заменяет отложенный тест. Он делает первый проход
+дешёвым и честным.
+
+## Быстрый старт
+
+```bash
+git clone https://github.com/<owner>/vision-eval.git
+cd vision-eval
+python -m pip install -e .
+python examples/make_examples.py
+
+vision-eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png
+vision-eval mask examples/mask_pred.png examples/mask_gt.png --classes 1
+vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
+```
+
+Пример вывода:
+
+```json
+{
+  "mae": 0.015852,
+  "rmse": 0.080293,
+  "psnr_db": 21.906,
+  "ssim": 0.96038,
+  "changed_pct": 6.866,
+  "regions": [{"kind": "blob", "area": 3500, "box": [80, 70, 149, 119], "peak": 0.6588}]
+}
+```
+
+## Команды
+
+| Команда | Что делает | Порог для CI |
+|---|---|---|
+| `vision-eval diff A B` | метрики изображения, области, контактный лист | `--min-psnr 38` |
+| `vision-eval mask PRED GT` | IoU/Dice/precision/recall по классам | `--min-iou 0.8` |
+| `vision-eval depth PRED GT` | AbsRel/RMSE/δ, опциональный масштаб | `--max-absrel 0.1` |
+
+Все команды печатают JSON; `--json PATH` пишет файл, `--sheet PATH` — картинку. Код выхода: `0` — успех,
+`1` — порог нарушен, `2` — ошибка входа.
+
+## Скилл для агентов
+
+`SKILL.md` — переиспользуемая инструкция для Claude Code, Codex, OpenCode, Cursor и любого агента, который
+умеет читать файл и запускать команду.
+
+- **Claude Code:** скопировать каталог в `~/.claude/skills/vision-eval/`.
+- **Codex / OpenCode:** добавить текст `SKILL.md` в `AGENTS.md` или ссылаться на него из карточки.
+- **Cursor:** скопировать `docs/integrations/cursor.md` в `.cursor/rules/vision-eval.mdc`.
+- **MCP:** см. `docs/integrations/mcp.md`, обёртка вокруг CLI.
+- **GitHub Actions:** см. `docs/integrations/github-actions.md`.
+
+## Метрики кратко
+
+| Задача | Основная | Дополнительная |
+|---|---|---|
+| Изображение / рендер | PSNR, SSIM, MAE | FLIP, процент изменений |
+| Сегментация | IoU, Dice | boundary F, IoU по классам |
+| Детекция | mAP@IoU, precision/recall | AP по классам/размерам |
+| Глубина | AbsRel, RMSE | δ1/δ2/δ3 |
+| Оптический поток | EPE | доля выбросов, карта потока |
+| Ключевые точки | PCK, NME | ошибка по суставам |
+
+Не сравнивайте метрики, посчитанные с разным resize, crop, цветовым пространством или нормализацией.
+Пишите это в отчёте.
+
+## Чего он не делает
+
+- Это не лидерборд.
+- Он не решает, красива ли картинка.
+- Он не заменяет человеческую оценку субъективного качества.
+- Он не прячет плохой пример за средним.
+
+## Документы
+
+- [SKILL.md](SKILL.md) — правила и рабочий процесс для агента.
+- [examples/README.md](examples/README.md) — синтетические примеры и команды.
+- [docs/github-topics.md](docs/github-topics.md) — темы GitHub.
+- [LAUNCH.md](LAUNCH.md) — честный план публикации и распространения.
+- [English](README.md) · [简体中文](README.zh-CN.md)
+
+## Лицензия
+
+MIT © 2026 Mind Space Studio. См. [LICENSE](LICENSE).
