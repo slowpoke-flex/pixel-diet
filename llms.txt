@@ -4,7 +4,7 @@ Numbers-first evaluation for computer vision: image diffs, segmentation masks, d
 
 ## Links
 
-- Repository: https://github.com/<owner>/vision-eval
+- Repository: https://github.com/slowpoke-flex/vision-eval
 - Skill: ./SKILL.md
 - Quickstart: ./README.md
 - Chinese: ./README.zh-CN.md

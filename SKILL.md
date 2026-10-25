@@ -88,4 +88,4 @@ All commands exit non-zero when a threshold fails (`--min-psnr`, `--min-iou`, `-
 It is not a model, a dataset or a benchmark leaderboard. It does not replace task-specific evaluation, human
 review for subjective quality, or a held-out test set. It makes the first pass cheap and honest.
 
-Mind Space Studio · MIT · https://github.com/<owner>/vision-eval
+Mind Space Studio · MIT · https://github.com/slowpoke-flex/vision-eval
