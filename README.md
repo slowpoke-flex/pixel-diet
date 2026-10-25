@@ -4,9 +4,11 @@
 
 **Numbers first, pixels last.** A small, framework-agnostic skill and CLI for evaluating computer-vision
 outputs: image diffs, segmentation masks, depth maps, and the contact sheets that make a failure obvious
-without burning a million image tokens.
+as a ~250-token JSON report instead of thousands of image tokens.
 
-Built and maintained by **Mind Space Studio**. MIT.\n\n![vision-eval diff](docs/demo.png)
+Built and maintained by **Mind Space Studio**. MIT.
+
+![vision-eval diff](docs/demo.png)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Русский](README.ru.md)
 
@@ -23,7 +25,25 @@ sample size and the command that produced it. This tool gives an agent that firs
 
 It does not train models, host datasets or replace a held-out test set. It makes the first pass cheap and honest.
 
+## Why it saves tokens
+
+Every image an agent "looks at" costs roughly `width × height / 750` tokens on Claude (capped around
+1.6k per image). Comparing two renders means paying for both. vision-eval returns the verdict as a short
+JSON report instead, and you open the contact sheet only when a threshold fails.
+
+| Image pair | Send A + B to the model | vision-eval JSON | Savings |
+|------------|------------------------:|-----------------:|--------:|
+| 1920×1080  | ~3,200 tokens           | ~270 tokens      | **~12×** |
+| 1024×1024  | ~2,800 tokens           | ~220 tokens      | **~13×** |
+| 256×256    | ~170 tokens             | ~220 tokens      | none — just send the images |
+
+Reproduce on your own files: `python examples/token_budget.py A.png B.png`. Numbers are estimates
+(image formula from Anthropic docs, JSON counted with a proxy tokenizer); savings multiply with every
+pair an agent would otherwise inspect.
+
 ## Quickstart
+
+Requires Python ≥ 3.10; dependencies are just `numpy` and `Pillow`.
 
 ```bash
 git clone https://github.com/slowpoke-flex/vision-eval.git
@@ -74,6 +94,9 @@ read a file and run a command. Copy it into the agent's skill directory; the CLI
 - **GitHub Actions:** see `docs/integrations/github-actions.md`.
 
 ## Metrics, briefly
+
+The CLI computes image, segmentation and depth metrics. The other rows are a reference
+for choosing metrics and are **not implemented yet**.
 
 | Task | Primary | Secondary |
 |---|---|---|

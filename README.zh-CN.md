@@ -20,7 +20,23 @@
 
 它不训练模型、不托管数据集，也不替代真正的测试集。它只让第一轮评估更便宜、更诚实。
 
+## 为什么能节省 token
+
+智能体每"看"一张图，在 Claude 上大约消耗 `宽 × 高 / 750` 个 token（单张上限约 1.6k）。比较两张渲染图就要为两张都付费。
+vision-eval 改为返回一份简短的 JSON 报告，只有阈值失败时才需要打开对比图。
+
+| 图像对 | 把 A + B 发给模型 | vision-eval JSON | 节省 |
+|--------|------------------:|-----------------:|-----:|
+| 1920×1080 | ~3,200 token | ~270 token | **~12×** |
+| 1024×1024 | ~2,800 token | ~220 token | **~13×** |
+| 256×256   | ~170 token   | ~220 token | 无 — 直接发图即可 |
+
+在自己的文件上复现：`python examples/token_budget.py A.png B.png`。数字为估算值（图像公式来自 Anthropic 文档，
+JSON 用代理分词器计数）；智能体需要检查的图像对越多，节省越多。
+
 ## 快速开始
+
+需要 Python ≥ 3.10；依赖只有 `numpy` 和 `Pillow`。
 
 ```bash
 git clone https://github.com/slowpoke-flex/vision-eval.git
@@ -69,6 +85,8 @@ vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
 - **GitHub Actions：** 见 `docs/integrations/github-actions.md`。
 
 ## 指标简表
+
+命令行工具目前计算图像、分割和深度指标。其余行仅供选择指标参考，**尚未实现**。
 
 | 任务 | 主要指标 | 次要指标 |
 |---|---|---|
