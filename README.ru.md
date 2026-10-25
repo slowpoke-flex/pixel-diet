@@ -25,7 +25,7 @@
 ## Быстрый старт
 
 ```bash
-git clone https://github.com/<owner>/vision-eval.git
+git clone https://github.com/slowpoke-flex/vision-eval.git
 cd vision-eval
 python -m pip install -e .
 python examples/make_examples.py
