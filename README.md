@@ -1,5 +1,7 @@
 # vision-eval
 
+[![tests](https://github.com/slowpoke-flex/vision-eval/actions/workflows/tests.yml/badge.svg)](https://github.com/slowpoke-flex/vision-eval/actions/workflows/tests.yml)
+
 **Numbers first, pixels last.** A small, framework-agnostic skill and CLI for evaluating computer-vision
 outputs: image diffs, segmentation masks, depth maps, and the contact sheets that make a failure obvious
 without burning a million image tokens.
