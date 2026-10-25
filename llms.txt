@@ -1,10 +1,10 @@
-# vision-eval
+# pixel-diet
 
 Numbers-first evaluation for computer vision: image diffs, segmentation masks, depth maps, contact sheets.
 
 ## Links
 
-- Repository: https://github.com/slowpoke-flex/vision-eval
+- Repository: https://github.com/slowpoke-flex/pixel-diet
 - Skill: ./SKILL.md
 - Quickstart: ./README.md
 - Chinese: ./README.zh-CN.md
@@ -14,5 +14,5 @@ Numbers-first evaluation for computer vision: image diffs, segmentation masks, d
 
 ## Use
 
-Run `vision-eval diff A B --json report.json --sheet sheet.png` before opening an image.
+Run `pixel-diet diff A B --brief --json report.json --sheet sheet.png` before opening an image.
 Read the JSON, open only the named regions, report n / slice / metric / threshold.

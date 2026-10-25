@@ -1,7 +1,7 @@
-# vision-eval
+# pixel-diet
 
 **Сначала числа, потом пиксели.** Небольшой скилл и CLI для оценки компьютерного зрения: разница изображений,
-маски сегментации, карты глубины и контактные листы, которые показывают ошибку в виде JSON на ~250 токенов вместо тысяч токенов на картинки.
+маски сегментации, карты глубины и контактные листы, которые показывают ошибку в виде **~50–150 токенов чисел вместо ~3 000 токенов пикселей** — до ~60× дешевле на одно сравнение.
 
 Разрабатывает **Mind Space Studio**. Лицензия MIT.
 
@@ -25,17 +25,18 @@
 ## Почему это экономит токены
 
 Каждая картинка, которую агент «смотрит», стоит в Claude примерно `ширина × высота / 750` токенов
-(потолок около 1,6k на изображение). Сравнение двух рендеров — платишь за оба. vision-eval вместо этого
-отдаёт короткий JSON, а контактный лист открывается только когда порог нарушен.
+(потолок около 1,6k на изображение). Сравнение двух рендеров — платишь за оба. pixel-diet вместо этого
+отдаёт вердикт числами, а контактный лист открывается только когда порог нарушен.
 
-| Пара изображений | A + B в модель | JSON vision-eval | Экономия |
-|------------------|---------------:|-----------------:|---------:|
-| 1920×1080        | ~3 200 токенов | ~270 токенов     | **~12×** |
-| 1024×1024        | ~2 800 токенов | ~220 токенов     | **~13×** |
-| 256×256          | ~170 токенов   | ~220 токенов     | нет — просто отправьте картинки |
+| Пара изображений | A + B в модель | Компактный JSON (по умолчанию) | `--brief`, одна строка |
+|------------------|---------------:|-------------------------------:|-----------------------:|
+| 1920×1080        | ~3 200 токенов | ~150 токенов (**~21×**)        | ~55 токенов (**~58×**) |
+| 1024×1024        | ~2 800 токенов | ~130 токенов (**~22×**)        | ~45 токенов (**~64×**) |
+| 256×256          | ~170 токенов   | ~125 токенов                   | ~45 токенов (~4×)      |
 
+Контактный лист по умолчанию 768 px в ширину (~260 токенов); `--sheet-width` делает его ещё меньше.
 Проверить на своих файлах: `python examples/token_budget.py A.png B.png`. Числа оценочные (формула для
-изображений из документации Anthropic, JSON посчитан прокси-токенизатором); экономия умножается на каждую
+изображений из документации Anthropic, текст посчитан прокси-токенизатором); экономия умножается на каждую
 пару, которую агент иначе разглядывал бы.
 
 ## Быстрый старт
@@ -43,14 +44,14 @@
 Нужен Python ≥ 3.10; зависимости — только `numpy` и `Pillow`.
 
 ```bash
-git clone https://github.com/slowpoke-flex/vision-eval.git
-cd vision-eval
+git clone https://github.com/slowpoke-flex/pixel-diet.git
+cd pixel-diet
 python -m pip install -e .
 python examples/make_examples.py
 
-vision-eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png
-vision-eval mask examples/mask_pred.png examples/mask_gt.png --classes 1
-vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
+pixel-diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png
+pixel-diet mask examples/mask_pred.png examples/mask_gt.png --classes 1
+pixel-diet depth examples/depth_pred.npy examples/depth_gt.npy
 ```
 
 Пример вывода:
@@ -70,11 +71,13 @@ vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
 
 | Команда | Что делает | Порог для CI |
 |---|---|---|
-| `vision-eval diff A B` | метрики изображения, области, контактный лист | `--min-psnr 38` |
-| `vision-eval mask PRED GT` | IoU/Dice/precision/recall по классам | `--min-iou 0.8` |
-| `vision-eval depth PRED GT` | AbsRel/RMSE/δ, опциональный масштаб | `--max-absrel 0.1` |
+| `pixel-diet diff A B` | метрики изображения, области, контактный лист | `--min-psnr 38` |
+| `pixel-diet mask PRED GT` | IoU/Dice/precision/recall по классам | `--min-iou 0.8` |
+| `pixel-diet depth PRED GT` | AbsRel/RMSE/δ, опциональный масштаб | `--max-absrel 0.1` |
 
-Все команды печатают JSON; `--json PATH` пишет файл, `--sheet PATH` — картинку. Код выхода: `0` — успех,
+Все команды печатают компактный JSON (`--pretty` — с отступами, `--brief` — вердикт одной строкой, например
+`FAIL diff psnr=21.91dB ssim=0.9604 changed=6.87% regions=2: blob 70x50@80,70; ...`).
+`--json PATH` всегда пишет полный отчёт, `--sheet PATH` — картинку. Код выхода: `0` — успех,
 `1` — порог нарушен, `2` — ошибка входа.
 
 ## Скилл для агентов
@@ -82,9 +85,9 @@ vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
 `SKILL.md` — переиспользуемая инструкция для Claude Code, Codex, OpenCode, Cursor и любого агента, который
 умеет читать файл и запускать команду.
 
-- **Claude Code:** скопировать каталог в `~/.claude/skills/vision-eval/`.
+- **Claude Code:** скопировать каталог в `~/.claude/skills/pixel-diet/`.
 - **Codex / OpenCode:** добавить текст `SKILL.md` в `AGENTS.md` или ссылаться на него из карточки.
-- **Cursor:** скопировать `docs/integrations/cursor.md` в `.cursor/rules/vision-eval.mdc`.
+- **Cursor:** скопировать `docs/integrations/cursor.md` в `.cursor/rules/pixel-diet.mdc`.
 - **MCP:** см. `docs/integrations/mcp.md`, обёртка вокруг CLI.
 - **GitHub Actions:** см. `docs/integrations/github-actions.md`.
 

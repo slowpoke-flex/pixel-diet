@@ -7,8 +7,8 @@ The repository is a normal Python package and an agent skill. It is **not** NewW
 
 - [ ] `python -m unittest discover -s tests` → OK.
 - [ ] `python examples/make_examples.py` → files generated.
-- [ ] `python -m vision_eval diff examples/a.png examples/b.png --json /tmp/r.json --sheet /tmp/s.png` → works.
-- [ ] `python -m pip install -e .` → `vision-eval --help` works.
+- [ ] `python -m pixel_diet diff examples/a.png examples/b.png --json /tmp/r.json --sheet /tmp/s.png` → works.
+- [ ] `python -m pip install -e .` → `pixel-diet --help` works.
 - [ ] `docs/demo.png` is a real screenshot of the diff sheet.
 - [ ] `README.md`, `README.zh-CN.md`, `README.ru.md` are present and linked.
 - [ ] `LICENSE` says MIT, Mind Space Studio, 2026.
@@ -21,14 +21,14 @@ The repository is a normal Python package and an agent skill. It is **not** NewW
 
 ```bash
 gh auth login
-cd "C:\Mind Space Studio\public\vision-eval"
+cd "C:\Mind Space Studio\public\pixel-diet"
 git init -b main
 git add .
-git commit -m "vision-eval: numbers-first evaluation for computer vision"
-gh repo create <owner>/vision-eval --public --source . --remote origin --push
+git commit -m "pixel-diet: numbers-first evaluation for computer vision"
+gh repo create <owner>/pixel-diet --public --source . --remote origin --push
 ```
 
-If the studio has an organisation, use `<org>/vision-eval`; otherwise the owner account is fine, the README
+If the studio has an organisation, use `<org>/pixel-diet`; otherwise the owner account is fine, the README
 still says Mind Space Studio.
 
 ## Topics and description

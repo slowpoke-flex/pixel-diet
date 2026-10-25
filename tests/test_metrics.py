@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from vision_eval.metrics import depth_metrics, diff_metrics, mask_metrics, psnr, ssim
+from pixel_diet.metrics import depth_metrics, diff_metrics, mask_metrics, psnr, ssim
 
 
 class MetricsTest(unittest.TestCase):

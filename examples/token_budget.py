@@ -9,7 +9,6 @@ cl100k_base as a proxy tokenizer when installed, otherwise ~4 chars per token.
 Both are estimates; measure with your own model's token counter before quoting.
 """
 
-import json
 import subprocess
 import sys
 
@@ -33,18 +32,21 @@ def text_tokens(text: str) -> int:
 
 def main() -> None:
     a, b = sys.argv[1], sys.argv[2]
-    # Exit code 1 (threshold failed) still produces a valid report.
-    out = subprocess.run(
-        [sys.executable, "-m", "vision_eval", "diff", a, b],
-        capture_output=True,
-        text=True,
-    ).stdout
-    report = json.loads(out)
+
+    def run(*extra: str) -> str:
+        # Exit code 1 (threshold failed) still produces valid output.
+        cmd = [sys.executable, "-m", "pixel_diet", "diff", a, b, *extra]
+        return subprocess.run(cmd, capture_output=True, text=True).stdout.strip()
+
     pair = image_tokens(a) + image_tokens(b)
-    js = text_tokens(json.dumps(report, indent=2))
-    print(f"images A+B : ~{pair} tokens")
-    print(f"JSON report: ~{js} tokens")
-    print(f"ratio      : ~{pair / max(js, 1):.1f}x")
+    rows = [
+        ("pretty JSON  (--pretty)", text_tokens(run("--pretty"))),
+        ("compact JSON (default)", text_tokens(run())),
+        ("one line     (--brief)", text_tokens(run("--brief"))),
+    ]
+    print(f"{'images A+B':<24}: ~{pair} tokens")
+    for name, n in rows:
+        print(f"{name:<24}: ~{n} tokens  (~{pair / max(n, 1):.0f}x fewer)")
 
 
 if __name__ == "__main__":

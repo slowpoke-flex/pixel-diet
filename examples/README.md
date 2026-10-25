@@ -13,9 +13,9 @@ Run:
 
 ```bash
 python -m pip install -e .
-vision-eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png
-vision-eval mask examples/mask_pred.png examples/mask_gt.png --classes 1
-vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
+pixel-diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png
+pixel-diet mask examples/mask_pred.png examples/mask_gt.png --classes 1
+pixel-diet depth examples/depth_pred.npy examples/depth_gt.npy
 ```
 
 Expected: the diff finds one large blob and one smaller darkening; the mask IoU is below 1; the depth

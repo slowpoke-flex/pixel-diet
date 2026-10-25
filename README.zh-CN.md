@@ -1,4 +1,4 @@
-# vision-eval
+# pixel-diet
 
 **先看数字，再看像素。** 一个与框架无关的技能和命令行工具，用来评估计算机视觉输出：图像差异、分割掩码、
 深度图，以及帮助人眼快速定位问题的对比图。
@@ -23,30 +23,31 @@
 ## 为什么能节省 token
 
 智能体每"看"一张图，在 Claude 上大约消耗 `宽 × 高 / 750` 个 token（单张上限约 1.6k）。比较两张渲染图就要为两张都付费。
-vision-eval 改为返回一份简短的 JSON 报告，只有阈值失败时才需要打开对比图。
+pixel-diet 改为用数字给出结论，只有阈值失败时才需要打开对比图。
 
-| 图像对 | 把 A + B 发给模型 | vision-eval JSON | 节省 |
-|--------|------------------:|-----------------:|-----:|
-| 1920×1080 | ~3,200 token | ~270 token | **~12×** |
-| 1024×1024 | ~2,800 token | ~220 token | **~13×** |
-| 256×256   | ~170 token   | ~220 token | 无 — 直接发图即可 |
+| 图像对 | 把 A + B 发给模型 | 紧凑 JSON（默认） | `--brief` 单行 |
+|--------|------------------:|------------------:|---------------:|
+| 1920×1080 | ~3,200 token | ~150 token（**~21×**） | ~55 token（**~58×**） |
+| 1024×1024 | ~2,800 token | ~130 token（**~22×**） | ~45 token（**~64×**） |
+| 256×256   | ~170 token   | ~125 token             | ~45 token（~4×） |
 
-在自己的文件上复现：`python examples/token_budget.py A.png B.png`。数字为估算值（图像公式来自 Anthropic 文档，
-JSON 用代理分词器计数）；智能体需要检查的图像对越多，节省越多。
+对比图默认宽 768 px（约 260 token）；`--sheet-width` 可以更小。在自己的文件上复现：
+`python examples/token_budget.py A.png B.png`。数字为估算值（图像公式来自 Anthropic 文档，文本用代理分词器计数）；
+智能体需要检查的图像对越多，节省越多。
 
 ## 快速开始
 
 需要 Python ≥ 3.10；依赖只有 `numpy` 和 `Pillow`。
 
 ```bash
-git clone https://github.com/slowpoke-flex/vision-eval.git
-cd vision-eval
+git clone https://github.com/slowpoke-flex/pixel-diet.git
+cd pixel-diet
 python -m pip install -e .
 python examples/make_examples.py
 
-vision-eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png
-vision-eval mask examples/mask_pred.png examples/mask_gt.png --classes 1
-vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
+pixel-diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png
+pixel-diet mask examples/mask_pred.png examples/mask_gt.png --classes 1
+pixel-diet depth examples/depth_pred.npy examples/depth_gt.npy
 ```
 
 输出示例：
@@ -66,11 +67,11 @@ vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
 
 | 命令 | 作用 | CI 阈值 |
 |---|---|---|
-| `vision-eval diff A B` | 图像/渲染指标、区域、可选对比图 | `--min-psnr 38` |
-| `vision-eval mask PRED GT` | 每个类别的 IoU/Dice/precision/recall | `--min-iou 0.8` |
-| `vision-eval depth PRED GT` | AbsRel/RMSE/δ，可选缩放 | `--max-absrel 0.1` |
+| `pixel-diet diff A B` | 图像/渲染指标、区域、可选对比图 | `--min-psnr 38` |
+| `pixel-diet mask PRED GT` | 每个类别的 IoU/Dice/precision/recall | `--min-iou 0.8` |
+| `pixel-diet depth PRED GT` | AbsRel/RMSE/δ，可选缩放 | `--max-absrel 0.1` |
 
-所有命令输出 JSON；`--json PATH` 写入文件，`--sheet PATH` 写入对比图。退出码：`0` 通过，`1` 阈值失败，
+所有命令输出紧凑 JSON（`--pretty` 缩进，`--brief` 输出单行结论）。`--json PATH` 始终写入完整报告，`--sheet PATH` 写入对比图。退出码：`0` 通过，`1` 阈值失败，
 `2` 输入错误。
 
 ## 智能体技能
@@ -78,9 +79,9 @@ vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
 `SKILL.md` 是可复用的智能体指令，适用于 Claude Code、Codex、OpenCode、Cursor 以及任何能读文件、
 运行命令的智能体。
 
-- **Claude Code：** 把本目录复制到 `~/.claude/skills/vision-eval/`。
+- **Claude Code：** 把本目录复制到 `~/.claude/skills/pixel-diet/`。
 - **Codex / OpenCode：** 把 `SKILL.md` 的内容加入 `AGENTS.md`，或在卡片中引用。
-- **Cursor：** 把 `docs/integrations/cursor.md` 复制到 `.cursor/rules/vision-eval.mdc`。
+- **Cursor：** 把 `docs/integrations/cursor.md` 复制到 `.cursor/rules/pixel-diet.mdc`。
 - **MCP：** 见 `docs/integrations/mcp.md`，把 CLI 包成工具。
 - **GitHub Actions：** 见 `docs/integrations/github-actions.md`。
 

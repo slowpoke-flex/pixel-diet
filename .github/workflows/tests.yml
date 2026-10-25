@@ -35,9 +35,9 @@ jobs:
       - name: CLI smoke test
         run: |
           python examples/make_examples.py
-          python -m vision_eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png --min-psnr 20
-          python -m vision_eval mask examples/mask_pred.png examples/mask_gt.png --classes 1 --min-iou 0.3
-          python -m vision_eval depth examples/depth_pred.npy examples/depth_gt.npy --max-absrel 0.05
+          python -m pixel_diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png --min-psnr 20
+          python -m pixel_diet mask examples/mask_pred.png examples/mask_gt.png --classes 1 --min-iou 0.3
+          python -m pixel_diet depth examples/depth_pred.npy examples/depth_gt.npy --max-absrel 0.05
 
       - name: Upload the diff sheet
         if: always()

@@ -32,7 +32,7 @@ the tool on their own images and told us what broke.
 ## Good first issues
 
 - Add FLIP support when `flip-eval` is installed.
-- Add COCO/YOLO box metrics (`vision-eval boxes`).
+- Add COCO/YOLO box metrics (`pixel-diet boxes`).
 - Add a boundary-F score for masks.
 - Add a GitHub Action that comments the JSON on a PR.
 - Add a Chinese/Russian README fix from a native speaker.

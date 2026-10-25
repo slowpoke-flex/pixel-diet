@@ -1,14 +1,14 @@
-# vision-eval
+# pixel-diet
 
-[![tests](https://github.com/slowpoke-flex/vision-eval/actions/workflows/tests.yml/badge.svg)](https://github.com/slowpoke-flex/vision-eval/actions/workflows/tests.yml)
+[![tests](https://github.com/slowpoke-flex/pixel-diet/actions/workflows/tests.yml/badge.svg)](https://github.com/slowpoke-flex/pixel-diet/actions/workflows/tests.yml)
 
 **Numbers first, pixels last.** A small, framework-agnostic skill and CLI for evaluating computer-vision
-outputs: image diffs, segmentation masks, depth maps, and the contact sheets that make a failure obvious
-as a ~250-token JSON report instead of thousands of image tokens.
+outputs: image diffs, segmentation masks, depth maps and small contact sheets. Your agent gets the verdict
+in **~50–150 tokens of numbers instead of ~3,000 tokens of pixels** — up to ~60× cheaper per comparison.
 
 Built and maintained by **Mind Space Studio**. MIT.
 
-![vision-eval diff](docs/demo.png)
+![pixel-diet diff](docs/demo.png)
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [Русский](README.ru.md)
 
@@ -28,17 +28,18 @@ It does not train models, host datasets or replace a held-out test set. It makes
 ## Why it saves tokens
 
 Every image an agent "looks at" costs roughly `width × height / 750` tokens on Claude (capped around
-1.6k per image). Comparing two renders means paying for both. vision-eval returns the verdict as a short
-JSON report instead, and you open the contact sheet only when a threshold fails.
+1.6k per image). Comparing two renders means paying for both. pixel-diet returns the verdict as numbers
+instead, and you open the contact sheet only when a threshold fails.
 
-| Image pair | Send A + B to the model | vision-eval JSON | Savings |
-|------------|------------------------:|-----------------:|--------:|
-| 1920×1080  | ~3,200 tokens           | ~270 tokens      | **~12×** |
-| 1024×1024  | ~2,800 tokens           | ~220 tokens      | **~13×** |
-| 256×256    | ~170 tokens             | ~220 tokens      | none — just send the images |
+| Image pair | Send A + B to the model | Compact JSON (default) | `--brief` one-liner |
+|------------|------------------------:|-----------------------:|--------------------:|
+| 1920×1080  | ~3,200 tokens           | ~150 tokens (**~21×**) | ~55 tokens (**~58×**) |
+| 1024×1024  | ~2,800 tokens           | ~130 tokens (**~22×**) | ~45 tokens (**~64×**) |
+| 256×256    | ~170 tokens             | ~125 tokens            | ~45 tokens (~4×) |
 
+The contact sheet is 768 px wide by default (~260 tokens); `--sheet-width` makes it smaller still.
 Reproduce on your own files: `python examples/token_budget.py A.png B.png`. Numbers are estimates
-(image formula from Anthropic docs, JSON counted with a proxy tokenizer); savings multiply with every
+(image formula from Anthropic docs, text counted with a proxy tokenizer); savings multiply with every
 pair an agent would otherwise inspect.
 
 ## Quickstart
@@ -46,17 +47,17 @@ pair an agent would otherwise inspect.
 Requires Python ≥ 3.10; dependencies are just `numpy` and `Pillow`.
 
 ```bash
-git clone https://github.com/slowpoke-flex/vision-eval.git
-cd vision-eval
+git clone https://github.com/slowpoke-flex/pixel-diet.git
+cd pixel-diet
 python -m pip install -e .
 python examples/make_examples.py
 
-vision-eval diff examples/a.png examples/b.png --json report.json --sheet sheet.png
-vision-eval mask examples/mask_pred.png examples/mask_gt.png --classes 1
-vision-eval depth examples/depth_pred.npy examples/depth_gt.npy
+pixel-diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png
+pixel-diet mask examples/mask_pred.png examples/mask_gt.png --classes 1
+pixel-diet depth examples/depth_pred.npy examples/depth_gt.npy
 ```
 
-If the `vision-eval` script is not on PATH, use `python -m vision_eval` with the same arguments.
+If the `pixel-diet` script is not on PATH, use `python -m pixel_diet` with the same arguments.
 
 Example output:
 
@@ -75,11 +76,13 @@ Example output:
 
 | Command | What it does | CI gate |
 |---|---|---|
-| `vision-eval diff A B` | image/render metrics + regions + optional sheet | `--min-psnr 38` |
-| `vision-eval mask PRED GT` | per-class IoU/Dice/precision/recall | `--min-iou 0.8` |
-| `vision-eval depth PRED GT` | AbsRel/RMSE/δ, optional scale | `--max-absrel 0.1` |
+| `pixel-diet diff A B` | image/render metrics + regions + optional sheet | `--min-psnr 38` |
+| `pixel-diet mask PRED GT` | per-class IoU/Dice/precision/recall | `--min-iou 0.8` |
+| `pixel-diet depth PRED GT` | AbsRel/RMSE/δ, optional scale | `--max-absrel 0.1` |
 
-All commands print JSON; `--json PATH` writes it, `--sheet PATH` writes the visual. Exit code is `0` on pass,
+All commands print compact JSON (`--pretty` to indent, `--brief` for a one-line verdict such as
+`FAIL diff psnr=21.91dB ssim=0.9604 changed=6.87% regions=2: blob 70x50@80,70; ...`).
+`--json PATH` always writes the full pretty report, `--sheet PATH` writes the visual. Exit code is `0` on pass,
 `1` on a failed threshold, `2` on an input error.
 
 ## Agent skill
@@ -87,9 +90,9 @@ All commands print JSON; `--json PATH` writes it, `--sheet PATH` writes the visu
 `SKILL.md` is the reusable instruction set for Claude Code, Codex, OpenCode, Cursor and any agent that can
 read a file and run a command. Copy it into the agent's skill directory; the CLI is optional but recommended.
 
-- **Claude Code:** copy this folder to `~/.claude/skills/vision-eval/`.
+- **Claude Code:** copy this folder to `~/.claude/skills/pixel-diet/`.
 - **Codex / OpenCode:** add the `SKILL.md` body to `AGENTS.md`, or reference it from a card.
-- **Cursor:** copy `docs/integrations/cursor.md` into `.cursor/rules/vision-eval.mdc`.
+- **Cursor:** copy `docs/integrations/cursor.md` into `.cursor/rules/pixel-diet.mdc`.
 - **Any MCP client:** see `docs/integrations/mcp.md` for a thin wrapper around the CLI.
 - **GitHub Actions:** see `docs/integrations/github-actions.md`.
 

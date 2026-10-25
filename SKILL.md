@@ -1,5 +1,5 @@
 ---
-name: vision-eval
+name: pixel-diet
 description: Evaluate computer-vision and image outputs with numbers first and pixels last. Use before eyeballing model outputs, renders or screenshots: compare images, segmentation masks, depth maps, boxes and keypoints with metrics, diffs and small contact sheets instead of full-resolution pictures.
 ---
 
@@ -20,13 +20,14 @@ evidence. One ugly output is not a failure. Report `n`, the slice, the metric an
 
 1. **Exact hash or metric, zero image tokens.** Identical bytes, PSNR, MAE, IoU, Dice, mAP, AbsRel, EPE. If the
    number answers the question, do not open the image.
-2. **Text diff and region report.** `vision-eval diff A.png B.png --json report.json` prints PSNR, SSIM, MAE,
-   changed %, max error and the connected regions above threshold (line / blob / speck, box, peak).
+2. **One-line verdict, then the region report.** `pixel-diet diff A.png B.png --brief --json report.json` prints
+   a ~50-token line (PASS/FAIL, PSNR, SSIM, changed %, top regions) and writes the full report — MAE, max error and
+   every connected region above threshold (line / blob / speck, box, peak) — to read only if the line is not enough.
 3. **Slices, not averages.** Per class, per depth band, per resolution, per lighting condition. A global mean hides
    the failure that matters.
 4. **Diagnostic views instead of beauty renders.** Masks, error heatmaps, boundary maps, depth normals, false-color
    flow. The raw output is data; the pretty render is marketing.
-5. **Only then pixels.** A contact sheet of 32×32 crops (`--sheet`) costs ~400 image tokens for six regions; a full
+5. **Only then pixels.** The default contact sheet (`--sheet`, 768 px wide) costs ~260 image tokens; a full
    1280×720 frame costs ~1,200. One sheet per state change, not one per step.
 
 ## Metrics by task
@@ -47,13 +48,13 @@ Never compare metrics computed with different preprocessing. State resize, color
 
 ```bash
 # image / render diff: JSON + optional contact sheet
-python -m vision_eval diff a.png b.png --json report.json --sheet sheet.png
+python -m pixel_diet diff a.png b.png --json report.json --sheet sheet.png
 
 # binary or multi-class masks: IoU/Dice per class
-python -m vision_eval mask pred.png gt.png --classes 0,1,2 --json mask.json
+python -m pixel_diet mask pred.png gt.png --classes 0,1,2 --json mask.json
 
 # depth: AbsRel/RMSE/delta, optional valid mask
-python -m vision_eval depth pred.png gt.png --scale 1.0 --json depth.json
+python -m pixel_diet depth pred.png gt.png --scale 1.0 --json depth.json
 ```
 
 All commands exit non-zero when a threshold fails (`--min-psnr`, `--min-iou`, `--max-absrel`). Use them in CI.
@@ -77,9 +78,9 @@ All commands exit non-zero when a threshold fails (`--min-psnr`, `--min-iou`, `-
 
 ## Integration
 
-- Claude Code: copy this folder to `~/.claude/skills/vision-eval/`.
+- Claude Code: copy this folder to `~/.claude/skills/pixel-diet/`.
 - Codex / OpenCode: add the `SKILL.md` body to `AGENTS.md` or reference it from a card.
-- Cursor: copy the short rule from `docs/integrations/cursor.md` to `.cursor/rules/vision-eval.mdc`.
+- Cursor: copy the short rule from `docs/integrations/cursor.md` to `.cursor/rules/pixel-diet.mdc`.
 - Any agent: run the CLI and read JSON; no framework plugin is required.
 - GitHub Actions: see `docs/integrations/github-actions.md`.
 
@@ -88,4 +89,4 @@ All commands exit non-zero when a threshold fails (`--min-psnr`, `--min-iou`, `-
 It is not a model, a dataset or a benchmark leaderboard. It does not replace task-specific evaluation, human
 review for subjective quality, or a held-out test set. It makes the first pass cheap and honest.
 
-Mind Space Studio · MIT · https://github.com/slowpoke-flex/vision-eval
+Mind Space Studio · MIT · https://github.com/slowpoke-flex/pixel-diet
