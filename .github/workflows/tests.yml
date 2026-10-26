@@ -40,6 +40,8 @@ jobs:
           python -m pixel_diet shrink examples/shrink -o /tmp/batch --preset edge-fast --json /tmp/batch.json --brief
           python -c "from PIL import Image; Image.new('RGB',(1600,900),(240,240,240)).save('/tmp/made.png')"
           cat /tmp/made.png | python -m pixel_diet shrink - -o - --preset edge-fast > /tmp/piped.webp
+          python -m pixel_diet shrink /tmp/made.png -o /tmp/direct.webp --preset edge-fast
+          cmp /tmp/piped.webp /tmp/direct.webp
           python -c "from PIL import Image; assert Image.open('/tmp/piped.webp').format == 'WEBP'"
 
       - name: Evaluation CLI smoke test
