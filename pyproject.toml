@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixel-diet"
-version = "0.3.0"
+version = "0.3.1"
 description = "Shrink images before a vision model pays for them: crop, resize and re-encode with named presets. Compares images as numbers too."
 readme = "README.md"
 requires-python = ">=3.10"
