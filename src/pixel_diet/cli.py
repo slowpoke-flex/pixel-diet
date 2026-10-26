@@ -118,7 +118,11 @@ def _run_shrink(args: argparse.Namespace) -> int:
     }
     if args.input == "-":
         result = optimize(sys.stdin.buffer.read(), args.preset, **options)
-        written = _write_image(result, args.output)
+        target = args.output
+        if target != "-" and Path(target).is_dir():
+            suffix = {"WEBP": ".webp", "PNG": ".png", "JPEG": ".jpg"}[result.format]
+            target = str(Path(target) / ("stdin" + suffix))
+        written = _write_image(result, target)
         report = {**result.to_dict(), "output": written}
     elif Path(args.input).is_dir():
         if args.output == "-":
@@ -126,11 +130,15 @@ def _run_shrink(args: argparse.Namespace) -> int:
         report = optimize_tree(args.input, args.output, args.preset, **options)
     else:
         result = optimize(args.input, args.preset, **options)
-        written = _write_image(result, args.output)
+        target = args.output
+        if target != "-" and Path(target).is_dir():
+            suffix = {"WEBP": ".webp", "PNG": ".png", "JPEG": ".jpg"}[result.format]
+            target = str(Path(target) / (Path(args.input).stem + suffix))
+        written = _write_image(result, target)
         report = {**result.to_dict(), "output": written}
 
     # Never mix text and binary on stdout.
-    if args.output == "-" and args.input != "-":
+    if args.output == "-":
         if args.json:
             Path(args.json).parent.mkdir(parents=True, exist_ok=True)
             Path(args.json).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
