@@ -1,56 +1,62 @@
 # Publish checklist (owner only)
 
-The repository is a normal Python package and an agent skill. It is **not** NewWave3D; do not mention
-`.newwave3d`, the engine, private data or customer names. The public face is **Mind Space Studio**.
+The repository is a normal Python package and an agent skill. The public face is **Mind Space Studio**;
+do not mention `the private product brand`, the engine, private data or customer names.
 
 ## Before `git push`
 
-- [ ] `python -m unittest discover -s tests` → OK.
-- [ ] `python examples/make_examples.py` → files generated.
-- [ ] `python -m pixel_diet diff examples/a.png examples/b.png --json /tmp/r.json --sheet /tmp/s.png` → works.
-- [ ] `python -m pip install -e .` → `pixel-diet --help` works.
-- [ ] `docs/demo.png` is a real screenshot of the diff sheet.
-- [ ] `README.md`, `README.zh-CN.md`, `README.ru.md` are present and linked.
+- [ ] `python -m unittest discover -s tests` → OK (19 tests).
+- [ ] `python examples/shrink_demo.py` → the table matches `README.md`.
+- [ ] `pixel-diet presets` works, and `pixel-diet shrink` works on a file, a directory and stdin.
+- [ ] `README.md`, `README.zh-CN.md`, `README.ru.md` describe the same presets and the same numbers.
 - [ ] `LICENSE` says MIT, Mind Space Studio, 2026.
-- [ ] `git grep -nE "sk-|AIza|ghp_|PRIVATE KEY|C:\\\\Users|NewEra3D"` returns nothing.
-- [ ] No `Private/`, `.env`, tokens, customer images or personal salary data.
+- [ ] `git grep -nE "sk-|AIza|ghp_|PRIVATE KEY|[A-Z]:\\\\Users"` returns nothing.
+- [ ] No `Private/`, `.env`, tokens, customer images or salary data.
+- [ ] Token estimates are labelled as estimates; no "identical output" claim.
 
-## Create the repository
+## Release
 
-`gh` is not installed on the current laptop. Install it (`winget install --id GitHub.cli`), then:
+`gh` is installed at `C:\Program Files\GitHub CLI\gh.exe` and authenticated as `slowpoke-flex`.
 
 ```bash
-gh auth login
 cd "C:\Mind Space Studio\public\pixel-diet"
-git init -b main
-git add .
-git commit -m "pixel-diet: numbers-first evaluation for computer vision"
-gh repo create <owner>/pixel-diet --public --source . --remote origin --push
+git tag -a v0.3.0 -m "pixel-diet 0.3.0: presets, bytes API, batch CLI"
+git push origin main --tags
+gh release create v0.3.0 --title "pixel-diet 0.3.0" --notes "Presets (ui-agent, ocr-document, game-sprite, edge-fast), path/bytes/data-URI API, batch and stdin CLI, measured table, 19 tests."
 ```
 
-If the studio has an organisation, use `<org>/pixel-diet`; otherwise the owner account is fine, the README
-still says Mind Space Studio.
+## PyPI (not done yet)
+
+The name `pixel-diet` is free on PyPI as of 2026-10-26. Publishing needs an account and a token:
+
+```bash
+python -m pip install build twine
+python -m build
+twine upload dist/*
+```
+
+Do not write `pip install pixel-diet` in the README until the upload exists.
 
 ## Topics and description
 
 Description:
 
-> Numbers-first computer-vision evaluation: image diffs, masks, depth, contact sheets, agent skill.
+> Shrink images before a vision model pays for them: crop, resize and re-encode with named presets. Compares images as numbers too.
 
-Add the 20 topics from `docs/github-topics.md` in **Settings → Topics**. Topics are a hint; the README,
-examples and community posts are the distribution.
+Add the 20 topics from `docs/github-topics.md`. Topics are a hint; the measured table and community posts
+are the distribution.
 
-## Optional GitHub Pages
+## The duplicate question
 
-A repository README is already a page. If a landing page is wanted, enable **Settings → Pages → Deploy from
-branch → main /docs** only after adding `docs/index.html`; do not publish the engine or private demos there.
+`slowpoke-flex/vision-eval` shares this repository's history and describes the old, evaluation-only product.
+Two public repos with the same code and the same 20 topics split attention and look careless. Decide one:
 
-## Distribution
+- keep `pixel-diet` public and make `vision-eval` private (one command, reversible), or
+- keep both and make `vision-eval` a thin pointer to `pixel-diet`.
 
-Follow `LAUNCH.md`. The first goal is 10 users who ran it on their own data, not 1,000 stars. Do not buy stars,
-fake testimonials or post the same text in ten communities.
+Do not leave both as full copies.
 
 ## What this does not prove
 
-This repository is a **studio utility**, not a proof of NewWave3D. It can show that the studio writes honest
-tooling; it does not replace the engine gate, the public facade or the first customer.
+This repository is a **studio utility**, not a proof of the engine project. It can show that the studio measures
+before it claims; it does not replace the engine gate, the public facade or the first customer.

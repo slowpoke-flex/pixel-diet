@@ -32,7 +32,17 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
-      - name: CLI smoke test
+      - name: Shrink smoke test
+        run: |
+          python examples/shrink_demo.py
+          python -m pixel_diet shrink examples/shrink/desktop.png -o /tmp/slim.webp --preset ui-agent --brief
+          python -m pixel_diet shrink examples/shrink/sprite.png -o /tmp/sprite.webp --preset game-sprite
+          python -m pixel_diet shrink examples/shrink -o /tmp/batch --preset edge-fast --json /tmp/batch.json --brief
+          python -c "from PIL import Image; Image.new('RGB',(1600,900),(240,240,240)).save('/tmp/made.png')"
+          cat /tmp/made.png | python -m pixel_diet shrink - -o - --preset edge-fast > /tmp/piped.webp
+          python -c "from PIL import Image; assert Image.open('/tmp/piped.webp').format == 'WEBP'"
+
+      - name: Evaluation CLI smoke test
         run: |
           python examples/make_examples.py
           python -m pixel_diet diff examples/a.png examples/b.png --json report.json --sheet sheet.png --min-psnr 20

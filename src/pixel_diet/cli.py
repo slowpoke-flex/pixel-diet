@@ -9,7 +9,16 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw
 
+from . import __version__
 from .metrics import depth_metrics, diff_metrics, load_depth, load_image, load_mask, mask_metrics
+from .optimize import (
+    DEFAULT_PRESET,
+    PRESETS,
+    Result,
+    optimize,
+    optimize_tree,
+    presets_table,
+)
 
 
 def _emit(args: argparse.Namespace, report: dict, verdict: str | None) -> None:
@@ -24,6 +33,16 @@ def _emit(args: argparse.Namespace, report: dict, verdict: str | None) -> None:
     else:
         # Compact by default: indentation costs ~35-40% more tokens for an agent reading stdout.
         print(json.dumps(report, separators=(",", ":"), ensure_ascii=False))
+
+
+def _human(size: int | None) -> str:
+    if size is None:
+        return "?"
+    if size < 1024:
+        return f"{size}B"
+    if size < 1024 * 1024:
+        return f"{size / 1024:.1f}KB"
+    return f"{size / (1024 * 1024):.2f}MB"
 
 
 def _brief(cmd: str, r: dict, verdict: str | None) -> str:
@@ -45,6 +64,15 @@ def _brief(cmd: str, r: dict, verdict: str | None) -> str:
         worst = min(r["classes"], key=lambda c: c["iou"])
         return (f"{head}mask mean_iou={r['mean_iou']:.4f} mean_dice={r['mean_dice']:.4f} "
                 f"worst=class {worst['class']} iou={worst['iou']:.4f}")
+    if cmd == "shrink":
+        if "files" in r:
+            return (f"{head}shrink preset={r['preset']} files={r['files']} "
+                    f"{_human(r['bytes_in'])}->{_human(r['bytes_out'])} ({r['saved_pct']}%) "
+                    f"tokens~{r['tokens_before']}->{r['tokens_after']} ({r['token_ratio']}x)")
+        return (f"{head}shrink preset={r['preset']} {r['source_width']}x{r['source_height']}"
+                f"->{r['width']}x{r['height']} {r['format'].lower()} "
+                f"{_human(r.get('bytes_in'))}->{_human(r['bytes_out'])} ({r.get('saved_pct')}%) "
+                f"tokens~{r['tokens_before']}->{r['tokens_after']} ({r['token_ratio']}x)")
     return (f"{head}depth abs_rel={r['abs_rel']:.4f} rmse={r['rmse']:.4f} "
             f"d1={r['delta1']:.3f} valid_px={r['valid_px']}")
 
@@ -70,17 +98,76 @@ def _sheet(a_path: str, b_path: str, report: dict, out: str, width: int = 768) -
     sheet.save(out, quality=88)
 
 
+def _write_image(result: Result, target: str) -> str:
+    if target == "-":
+        sys.stdout.buffer.write(result.data)
+        sys.stdout.buffer.flush()
+        return "-"
+    path = Path(target)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(result.data)
+    return str(path)
+
+
+def _run_shrink(args: argparse.Namespace) -> int:
+    options = {
+        "max_dimension": args.max_dimension,
+        "format": args.format.upper() if args.format else None,
+        "quality": args.quality,
+        "trim": False if args.no_trim else None,
+    }
+    if args.input == "-":
+        result = optimize(sys.stdin.buffer.read(), args.preset, **options)
+        written = _write_image(result, args.output)
+        report = {**result.to_dict(), "output": written}
+    elif Path(args.input).is_dir():
+        if args.output == "-":
+            raise ValueError("a directory cannot be written to stdout; pass a directory to -o")
+        report = optimize_tree(args.input, args.output, args.preset, **options)
+    else:
+        result = optimize(args.input, args.preset, **options)
+        written = _write_image(result, args.output)
+        report = {**result.to_dict(), "output": written}
+
+    # Never mix text and binary on stdout.
+    if args.output == "-" and args.input != "-":
+        if args.json:
+            Path(args.json).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.json).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        return 0
+    _emit(args, report, None)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="pixel-diet",
-        description="Put your agent on a pixel diet: computer-vision verdicts as numbers, not images.",
+        description="Put your agent on a pixel diet: shrink images before a vision model pays for them, "
+                    "and compare images as numbers instead of pixels.",
+        epilog=presets_table(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    ap.add_argument("--version", action="version", version=f"pixel-diet {__version__}")
     sub = ap.add_subparsers(dest="cmd", required=True)
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--json", help="write the full pretty report to this path")
     out = common.add_mutually_exclusive_group()
     out.add_argument("--brief", action="store_true", help="print a one-line verdict instead of JSON")
     out.add_argument("--pretty", action="store_true", help="print indented JSON (default: compact)")
+
+    s = sub.add_parser(
+        "shrink",
+        help="shrink an image or a folder for a vision model",
+        description="Crop, resize and re-encode with a named preset. Accepts a file, a directory or - for stdin.",
+        parents=[common],
+    )
+    s.add_argument("input", help="image, directory, or - for stdin")
+    s.add_argument("-o", "--output", required=True, help="file, directory, or - for stdout")
+    s.add_argument("--preset", default=DEFAULT_PRESET, choices=sorted(PRESETS))
+    s.add_argument("--max-dimension", type=int, help="override the preset's longest side, in pixels")
+    s.add_argument("--format", choices=["webp", "png", "jpeg"], help="override the preset's output format")
+    s.add_argument("--quality", type=int, help="override the preset's quality (ignored for lossless presets)")
+    s.add_argument("--no-trim", action="store_true", help="keep the borders, only resize and re-encode")
 
     d = sub.add_parser("diff", help="image / render difference", parents=[common])
     d.add_argument("a")
@@ -102,8 +189,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--scale", type=float, default=1.0)
     p.add_argument("--max-absrel", type=float)
 
+    sub.add_parser("presets", help="list the built-in presets")
+
     args = ap.parse_args(argv)
+    if args.cmd == "presets":
+        print(presets_table())
+        return 0
     try:
+        if args.cmd == "shrink":
+            return _run_shrink(args)
         if args.cmd == "diff":
             report = diff_metrics(load_image(args.a), load_image(args.b), args.threshold)
             if args.sheet:

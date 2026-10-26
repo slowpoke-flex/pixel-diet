@@ -1,6 +1,6 @@
 # pixel-diet
 
-Numbers-first evaluation for computer vision: image diffs, segmentation masks, depth maps, contact sheets.
+Shrink images before a vision model pays for them, and compare images as numbers instead of pixels.
 
 ## Links
 
@@ -14,5 +14,25 @@ Numbers-first evaluation for computer vision: image diffs, segmentation masks, d
 
 ## Use
 
-Run `pixel-diet diff A B --brief --json report.json --sheet sheet.png` before opening an image.
-Read the JSON, open only the named regions, report n / slice / metric / threshold.
+Shrink an input with a named preset (no threshold tuning):
+
+```bash
+pixel-diet shrink shot.png -o slim.webp --preset ui-agent
+pixel-diet shrink ./inbox -o ./clean --preset ocr-document --json report.json
+cat shot.png | pixel-diet shrink - -o - --preset ui-agent > slim.webp
+```
+
+In code: `optimize_for_llm(path, preset="ui-agent")` returns a `data:` URI;
+`optimize_bytes(raw, preset="ocr-document")` does bytes in, bytes out, no disk.
+
+Compare outputs without opening pictures:
+
+```bash
+pixel-diet diff A.png B.png --brief --json report.json --sheet sheet.png
+```
+
+## Reporting rule
+
+State the preset, the before/after pixels, the real byte sizes and the estimated image tokens
+(`ceil(w*h/750)`, Anthropic's formula). Never quote a token saving without the formula. Never claim the
+model output is identical; say what was tested and on which slice.

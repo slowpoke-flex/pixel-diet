@@ -1,4 +1,4 @@
-﻿__pycache__/
+__pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
@@ -8,3 +8,4 @@ examples/report.json
 examples/sheet.png
 examples/diff.json
 examples/diff.png
+examples/shrink/
